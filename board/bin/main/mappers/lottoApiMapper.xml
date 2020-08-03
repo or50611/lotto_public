@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+ 
+<mapper namespace="com.board.mapper.LottoApiMapper">
+	
+	<select id="lottoMainList" parameterType="map" resultType="map">
+		SELECT a.drawNo,
+		       a.num1,
+		       a.num2,
+		       a.num3,
+		       a.num4,
+		       a.num5,
+		       a.num6,
+		       a.bonusNum,
+		       a.totalSellingPrice,
+		       a.drawDate,
+		       b.rank,
+		       ifnull(b.sellingPriceByRank,0) sellingPriceByRank,
+		       ifnull(b.winningPriceByRank,0) winningPriceByRank,
+		       ifnull(b.winningCnt,0) winningCnt
+		FROM   lotto_main a LEFT JOIN
+		       lotto_rank b
+		ON  	 a.drawNo = b.drawNo
+		AND    a.drawNo = #{drawNo}
+		WHERE  a.drawNo = #{drawNo}
+		
+	</select>
+	
+	<select id="lottoRecommendMain" resultType="map">
+		SELECT drawNo,total,rank1,rank2,rank3,rank4,rank5
+		FROM lotto_recommend_result
+		WHERE drawNo = (SELECT MAX(drawNo) FROM lotto_main)
+	</select>
+	
+	<select id="lottoWinnerType" parameterType="map" resultType="map">
+		SELECT 
+			ifnull(sum(case when gameType ='자동' then typeCnt end),0) as 'auto', 
+			ifnull(sum(case when gameType ='수동' then typeCnt end),0) as 'manual', 
+			ifnull(sum(case when gameType ='반자동' then typeCnt end),0) as 'semiAuto' 
+		        FROM (
+		SELECT gameType,
+				COUNT(*) typeCnt
+			FROM lotto_addr_first
+		WHERE drawNo = #{drawNo}
+		GROUP BY gameType) a
+	</select>
+	<select id="lottoLatestNum" parameterType="map" resultType="int">
+		SELECT MAX(drawNo) drawNo
+		FROM   lotto_main
+	</select>
+	
+	<select id="lottoAddrRadiusNum" parameterType="map" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*) addrCnt FROM (
+		SELECT   ROUND((6371*acos(cos(radians(#{lat}))*cos(RADIANS(lat))*cos(radians(lng) 
+		         -radians(#{lng}))+sin(radians(#{lat}))*sin(radians(lat)))),3) AS distance
+		FROM     ( SELECT storeId
+		         FROM     lotto_addr_first
+		         GROUP BY storeId
+		         )
+		         a
+		]]>
+		         <if test='winAddrYn.equals("N")'>
+		         RIGHT OUTER JOIN lotto_addr_all b
+		         </if>
+		         <if test='winAddrYn.equals("Y")'>
+		         LEFT OUTER JOIN lotto_addr_all b
+		         </if>
+		<![CDATA[
+		         ON       a.storeId = b.storeId
+		         WHERE b.deal645 = '1'
+		HAVING   distance          <= #{dist}
+		) a
+		]]>
+	</select>
+	
+	<select id="lottoAddrRadius" parameterType="map" resultType="map">
+		<![CDATA[
+		SELECT   b.storeId,
+		         CONCAT(address1,' ', IF(address2 = '','',CONCAT(address2,' ')), IF(address3 = '', address4, address3)) address,
+		         b.addressDtl,
+		         b.shopName,
+		         b.tel,
+		         b.lat,
+		         b.lng,
+		         b.dealSpeeto,
+		         b.deal645,
+		         b.deal520,
+		         IFNULL(a.winCnt,0) winCnt,
+		         ROUND((6371*acos(cos(radians(#{lat}))*cos(RADIANS(lat))*cos(radians(lng) 
+		         -radians(#{lng}))+sin(radians(#{lat}))*sin(radians(lat)))),3) AS distance
+		FROM     ( SELECT  storeId,
+		                  count(*) winCnt,
+		                  MAX(shopName) shopName,
+		                  MAX(address) address
+		         FROM     lotto_addr_first
+		         GROUP BY storeId
+		         )
+		         a
+		]]>
+		         <if test='winAddrYn.equals("N")'>
+		         RIGHT OUTER JOIN lotto_addr_all b
+		         </if>
+		         <if test='winAddrYn.equals("Y")'>
+		         LEFT OUTER JOIN lotto_addr_all b
+		         </if>
+		<![CDATA[
+		         ON       a.storeId = b.storeId
+		         WHERE b.deal645 = '1'
+		HAVING   distance          <= #{dist}
+		ORDER BY distance 
+		]]>
+		<if test='paging.equals("Y")'>
+			LIMIT #{startNum}, #{pageSize}
+		</if>
+	</select>
+
+
+</mapper>

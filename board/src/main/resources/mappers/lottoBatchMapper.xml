@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+ 
+<mapper namespace="com.board.mapper.LottoBatchMapper">
+	
+	<select id="lottoCountPlus" resultType="int">
+		SELECT MAX(drawNo)+1 drawNo
+		FROM lotto_rank
+	</select>
+	
+	<select id="lottoAddrSecondMaxDrawNo" resultType="int">
+		SELECT MAX(drawNo) drawNo 
+		FROM lotto_addr_second
+	</select>
+	
+	<select id="lottoMainDrawNo" resultType="map">
+		SELECT drawNo,num1,num2,num3,num4,num5,num6,bonusNum FROM lotto_main
+		WHERE drawDate = DATE_FORMAT(now(), '%Y%m%d')
+	</select>
+	
+	<select id="lottoRecommentList" parameterType="int" resultType="map">
+	<![CDATA[
+	SELECT drawNo,num1,num2,num3,num4,num5,num6
+	FROM lotto_recommend_his
+	WHERE regdate < STR_TO_DATE(DATE_FORMAT(NOW(), '%Y-%m-%d 20:00:00'), '%Y-%m-%d %H:%i:%s')
+	]]>
+	AND drawNo = #{drawNo}
+	</select>
+	
+	<insert id="lottoBatchHistory" parameterType="map">
+        INSERT INTO lotto_batch_history
+            VALUES
+            (
+	            #{batchNo},
+	            #{contents},
+	            now()
+	         )
+    </insert>
+    
+    <insert id="lottoSaveMain" parameterType="map">
+		INSERT INTO lotto_main 
+		(
+		   drawNo,
+		   num1,
+		   num2,
+		   num3,
+		   num4,
+		   num5,
+		   num6,
+		   bonusNum,
+		   totalSellingPrice,
+		   drawDate
+		) 
+		VALUES 
+		(
+		   #{drawNo},
+		   #{num1},
+		   #{num2},
+		   #{num3},
+		   #{num4},
+		   #{num5},
+		   #{num6},
+		   #{bonusNum},
+		   #{totalSellingPrice},
+		   #{drawDate}
+		)  
+		ON DUPLICATE KEY UPDATE 
+		drawNo = #{drawNo},
+		num1   = #{num1},
+		num2   = #{num2},
+		num3   = #{num3},
+		num4   = #{num4},
+		num5   = #{num5},
+		num6   = #{num6},
+		bonusNum = #{bonusNum},
+		totalSellingPrice = #{totalSellingPrice},
+		drawDate = #{drawDate}
+    </insert>
+    
+    <insert id="lottoSaveRank" parameterType="map">
+   	INSERT INTO lotto_rank
+           VALUES
+           (
+            #{drawNo},
+            #{rank},
+            #{sellingPriceByRank},
+            #{winningPriceByRank},
+            #{winningCnt}
+           )
+    </insert>
+    
+    <insert id="lottoSaveAddr" parameterType="map">
+   		INSERT INTO lotto_addr
+   			(
+	   			drawNo,
+	   			shopName,
+	   			address,
+	   			lat,
+	   			lng,
+	   			gameType
+   			)
+           VALUES
+           (
+	            #{drawNo},
+	            #{shopName},
+	            #{address},
+	            #{lat},
+	            #{lng},
+	            #{gameType}
+           )
+    </insert>
+    
+    <insert id="lottoSaveAddrAll" parameterType="map">
+   		INSERT INTO lotto_addr_all
+   			(
+	   			address1,
+	   			address2,
+	   			address3,
+	   			address4,
+	   			addressDtl,
+	   			shopName,
+	   			tel,
+	   			lat,
+	   			lng,
+	   			dealSpeeto,
+	   			deal645,
+	   			deal520,
+	   			storeId
+   			)
+           VALUES
+           (
+	            #{address1},
+	   			#{address2},
+	   			#{address3},
+	   			#{address4},
+	   			#{addressDtl},
+	   			#{shopName},
+	   			#{tel},
+	   			#{lat},
+	   			#{lng},
+	   			#{dealSpeeto},
+	   			#{deal645},
+	   			#{deal520},
+	   			#{storeId}
+           )
+    </insert>
+    
+    <insert id="lottoSaveAddrFirst" parameterType="map">
+   		INSERT INTO lotto_addr_first
+   			(
+   				drawNo,
+   				shopName,
+   				gameType,
+   				address,
+   				storeId
+   			)
+           VALUES
+           (
+	   			#{drawNo},
+   				#{shopName},
+   				#{gameType},
+   				#{address},
+   				#{storeId}
+           )
+    </insert>
+    
+    <insert id="lottoSaveAddrSecond" parameterType="map">
+   		INSERT INTO lotto_addr_second
+   			(
+   				drawNo,
+   				shopName,
+   				address,
+   				storeId
+   			)
+           VALUES
+           (
+	   			#{drawNo},
+   				#{shopName},
+   				#{address},
+   				#{storeId}
+           )
+    </insert>
+    
+    <insert id="lottoRecommentResult" parameterType="map">
+   		INSERT INTO lotto_recommend_result
+   			(
+   				drawNo,
+   				total,
+   				rank1,
+   				rank2,
+   				rank3,
+   				rank4,
+   				rank5
+   			)
+           VALUES
+           (
+	   			#{drawNo},
+   				#{total},
+   				#{rank1},
+   				#{rank2},
+   				#{rank3},
+   				#{rank4},
+   				#{rank5}
+           )
+    </insert>
+</mapper>

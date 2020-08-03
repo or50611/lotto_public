@@ -1,0 +1,67 @@
+buildscript {
+	ext {
+		springBootVersion = '2.0.3.RELEASE'
+	}
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+		classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.11"
+        classpath "org.jetbrains.kotlin:kotlin-allopen:1.3.11"
+        classpath "org.jetbrains.kotlin:kotlin-noarg:1.3.11"
+	}
+}
+
+apply plugin: 'java'
+apply plugin: 'eclipse-wtp'
+apply plugin: "kotlin"
+apply plugin: "kotlin-spring"
+apply plugin: "kotlin-noarg"
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'war'
+
+
+
+group = 'com.test'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = 1.8
+
+repositories {
+	mavenCentral()
+}
+
+configurations {
+	providedRuntime
+}
+
+dependencies {
+	compile('org.springframework.boot:spring-boot-starter-web')
+	providedRuntime('org.springframework.boot:spring-boot-starter-tomcat')
+	testCompile('org.springframework.boot:spring-boot-starter-test')
+	compile('org.springframework.boot:spring-boot-starter')
+	compile('mysql:mysql-connector-java')
+	compile("org.mybatis.spring.boot:mybatis-spring-boot-starter:1.1.1")
+	compile("org.mybatis:mybatis-spring")
+	compile("org.mybatis:mybatis")
+	compile('org.apache.tomcat.embed:tomcat-embed-jasper')
+	compile('javax.servlet:jstl')
+	compile('org.webjars:jquery:3.3.1-1')
+	compile('org.webjars:jquery-ui:1.12.1')
+	compile('com.googlecode.json-simple:json-simple:1.1.1')
+	compile('org.quartz-scheduler:quartz:2.3.0')
+	compile('org.springframework:spring-context-support:4.3.4.RELEASE')
+	compile('com.google.code.gson:gson:2.8.5')
+	compile('org.apache.commons:commons-lang3:3.0')
+	compile('org.jsoup:jsoup:1.11.3')
+	
+	compile("org.jetbrains.kotlin:kotlin-stdlib:1.3.11")
+    compile("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.11")
+    compile("org.jetbrains.kotlin:kotlin-reflect:1.3.11")
+    testCompile "org.jetbrains.kotlin:kotlin-test:1.3.11"
+    testCompile "org.jetbrains.kotlin:kotlin-test-junit:1.3.11"
+    compile("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.2")
+    compile("io.github.microutils:kotlin-logging:1.4.9")
+	
+}

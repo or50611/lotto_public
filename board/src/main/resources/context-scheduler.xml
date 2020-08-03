@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+
+
+	<context:annotation-config />
+    <context:component-scan base-package="com.board" />
+
+	<bean id="testJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="ScheduleService" />
+	    <property name="targetMethod" value="executeJob" />
+	    <property name="concurrent" value="false" />
+	</bean>
+	
+	<bean id="testJob1" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="ScheduleService" />
+	    <property name="targetMethod" value="executeJob1" />
+	    <property name="concurrent" value="false" />
+	</bean>
+	
+	<bean id="testJob2" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="ScheduleService" />
+	    <property name="targetMethod" value="executeJob2" />
+	    <property name="concurrent" value="false" />
+	</bean>
+
+    <bean id="testCronTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean" >
+        <property name="jobDetail" ref="testJob"/>
+        <property name="cronExpression" value="0 45/4 20 ? * SAT" />
+    </bean>
+    
+    <bean id="testCronTrigger1" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean" >
+        <property name="jobDetail" ref="testJob1"/>
+        <property name="cronExpression" value="0 10/10 21 ? * SAT" />
+    </bean>
+    
+    <bean id="testCronTrigger2" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean" >
+        <property name="jobDetail" ref="testJob"/>
+        <property name="cronExpression" value="0 1/10 21 ? * SAT" />
+    </bean>
+    
+    <bean id="testCronTrigger3" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean" >
+        <property name="jobDetail" ref="testJob2"/>
+        <property name="cronExpression" value="0 15 21 ? * SAT" />
+    </bean>
+
+    <bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <list>
+                <ref bean="testCronTrigger" />
+                <ref bean="testCronTrigger1" />
+                <ref bean="testCronTrigger2" />
+                <ref bean="testCronTrigger3" />
+            </list>
+        </property>
+    </bean>
+
+</beans>

@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+ 
+<mapper namespace="com.board.mapper.LottoAnalysisApiMapper">
+
+	<select id="lottoMaxDrawNo" resultType="int">
+		SELECT MAX(drawNo) FROM lotto_main
+	</select>
+
+	<select id="lottoAllRoundList" resultType="map" >
+		SELECT a.drawNo,
+		       a.num1,
+		       a.num2,
+		       a.num3,
+		       a.num4,
+		       a.num5,
+		       a.num6,
+		       a.bonusNum,
+		       a.totalSellingPrice,
+		       a.drawDate,
+		       ifnull(b.rankFirst,0) rankFirst,
+		       ifnull(b.rankSecond,0) rankSecond,
+		       ifnull(b.rankThird,0) rankThird,
+		       ifnull(b.rankFourth,0) rankFourth,
+		       ifnull(b.rankFifth,0) rankFifth
+		FROM   lotto_main a LEFT OUTER JOIN
+				(
+				SELECT 
+						drawNo,
+						ifnull(sum(case when rank ='FIRST' then winningPriceByRank end),0) as 'rankFirst', 
+						ifnull(sum(case when rank ='SECOND' then winningPriceByRank end),0) as 'rankSecond', 
+						ifnull(sum(case when rank ='THIRD' then winningPriceByRank end),0) as 'rankThird',
+						ifnull(sum(case when rank ='FOURTH' then winningPriceByRank end),0) as 'rankFourth',
+						ifnull(sum(case when rank ='FIFTH' then winningPriceByRank end),0) as 'rankFifth'
+				FROM lotto_rank
+				GROUP BY drawNo
+		) b
+		ON a.drawNo = b.drawNo
+		ORDER BY a.drawNo DESC
+	</select>
+	
+	<select id="lottoTurnRangeCount" parameterType="map" resultType="map">
+		SELECT a.num,
+		       a.cnt,
+		       IFNULL(b.bonusCnt,0) as bonusCnt
+		FROM (
+		SELECT num,
+		       COUNT(*) AS cnt
+		FROM (
+		      (SELECT num1 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+		      UNION ALL 
+		      (SELECT num2 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+		      UNION ALL
+		      (SELECT num3 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+		      UNION ALL
+		      (SELECT num4 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+		      UNION ALL
+		      (SELECT num5 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+		      UNION ALL
+		      (SELECT num6 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+		) a
+		GROUP BY num
+		HAVING num IN 
+			<foreach item="item" collection="numItem" open="(" separator="," close=")">
+			        #{item.value}
+			</foreach>
+		) a LEFT OUTER JOIN
+		(
+		      SELECT bonus, 
+		             COUNT(*) AS bonusCnt
+		      FROM (
+		         (SELECT bonusNum AS bonus FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+		      ) a
+		      GROUP BY bonus
+		      HAVING bonus IN 
+			<foreach item="item" collection="numItem" open="(" separator="," close=")">
+			        #{item.value}
+			</foreach>
+		) b
+		ON a.num = b.bonus
+		ORDER BY a.num
+	</select>
+	
+	<select id="lottoTurnRangeMaxCount" parameterType="map" resultType="int">
+		SELECT MAX(cnt) AS maxNum
+		FROM (
+			SELECT COUNT(*) AS cnt
+				FROM (
+				      (SELECT num1 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+				      UNION ALL 
+				      (SELECT num2 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+				      UNION ALL
+				      (SELECT num3 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+				      UNION ALL
+				      (SELECT num4 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+				      UNION ALL
+				      (SELECT num5 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+				      UNION ALL
+				      (SELECT num6 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+				      UNION ALL
+				      (SELECT bonusNum AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,#{turnRange})
+				) a
+			GROUP BY num
+		) b
+	</select>
+	
+	<select id="lottoNumExtraction30" resultType="map">
+	<![CDATA[
+		SELECT num,
+		       COUNT(*) AS cnt
+		FROM (
+		      (SELECT num1 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,30)
+		      UNION ALL 
+		      (SELECT num2 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,30)
+		      UNION ALL
+		      (SELECT num3 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,30)
+		      UNION ALL
+		      (SELECT num4 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,30)
+		      UNION ALL
+		      (SELECT num5 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,30)
+		      UNION ALL
+		      (SELECT num6 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,30)
+		      UNION ALL
+		      (SELECT bonusNum AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,30)	      
+		) a
+		GROUP BY num
+		HAVING cnt >= 3 AND cnt <= 7
+		ORDER BY RAND()
+		LIMIT 2
+	]]>
+	</select>
+	
+	<select id="lottoNumExtraction10" resultType="map">
+		SELECT b.lottoNum 
+				FROM (
+				SELECT num,
+				       COUNT(*) AS cnt
+				FROM (
+				      (SELECT num1 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,10)
+				      UNION ALL 
+				      (SELECT num2 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,10)
+				      UNION ALL
+				      (SELECT num3 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,10)
+				      UNION ALL
+				      (SELECT num4 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,10)
+				      UNION ALL
+				      (SELECT num5 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,10)
+				      UNION ALL
+				      (SELECT num6 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,10)
+				) a
+				GROUP BY num
+		) a
+		RIGHT JOIN
+		lotto_num645 b
+		ON a.num = b.lottoNum
+		WHERE num IS NULL
+		UNION ALL
+		SELECT b.lottoNum 
+				FROM (
+				SELECT num,
+				       COUNT(*) AS cnt
+				FROM (
+				      (SELECT num1 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,20)
+				      UNION ALL 
+				      (SELECT num2 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,20)
+				      UNION ALL
+				      (SELECT num3 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,20)
+				      UNION ALL
+				      (SELECT num4 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,20)
+				      UNION ALL
+				      (SELECT num5 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,20)
+				      UNION ALL
+				      (SELECT num6 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,20)
+				) a
+				GROUP BY num
+		) a
+		RIGHT JOIN
+		lotto_num645 b
+		ON a.num = b.lottoNum
+		WHERE num IS NULL
+		ORDER BY RAND()
+		LIMIT 1
+	</select>
+	
+	<insert id="lottoRecommendInsert" parameterType="map">
+		INSERT INTO lotto_recommend_his 
+		(
+		   drawNo,
+		   num1,
+		   num2,
+		   num3,
+		   num4,
+		   num5,
+		   num6
+		) 
+		VALUES 
+		(
+		   (SELECT MAX(drawNo) + 1 FROM lotto_main),
+		   #{num1},
+		   #{num2},
+		   #{num3},
+		   #{num4},
+		   #{num5},
+		   #{num6}
+		)
+	</insert>
+	
+	<select id="lottoNumExtraction02" resultType="map">
+	<![CDATA[
+		SELECT MAX(num00) num00,
+			   MAX(num10) num10,
+		       MAX(num20) num20,
+		       MAX(num30) num30,
+		       MAX(num40) num40
+			FROM (
+				SELECT num00,
+					   num10,
+				       num20,
+				       num30,
+				       '' num40
+				FROM (
+					SELECT 
+						MAX(CASE WHEN num > 0 AND num <= 10 THEN 1 ELSE 0 END) AS num00,
+					    MAX(CASE WHEN num > 10 AND num <= 20 THEN 1 ELSE 0 END) AS num10,
+					    MAX(CASE WHEN num > 20 AND num <= 30 THEN 1 ELSE 0 END) AS num20,
+					    MAX(CASE WHEN num > 30 AND num <= 40 THEN 1 ELSE 0 END) AS num30
+						    
+					FROM (
+					SELECT num,
+					       COUNT(*) AS cnt
+					FROM (
+					      (SELECT num1 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+					      UNION ALL 
+					      (SELECT num2 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,2)
+					      UNION ALL
+					      (SELECT num3 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,2)
+					      UNION ALL
+					      (SELECT num4 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,2)
+					      UNION ALL
+					      (SELECT num5 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,2)
+					      UNION ALL
+					      (SELECT num6 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,2)	      
+					) a
+					GROUP BY num
+					) a
+				) a
+				UNION ALL 
+				SELECT '' num01,
+					   '' num10,
+				       '' num20,
+				       '' num30,
+				       num40
+				FROM (
+					SELECT 
+					    MAX(CASE WHEN num > 40 AND num <= 45 THEN 1 ELSE 0 END) AS num40
+					FROM (
+					SELECT num,
+					       COUNT(*) AS cnt
+					FROM (
+					      (SELECT num1 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,4)
+					      UNION ALL 
+					      (SELECT num2 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,4)
+					      UNION ALL
+					      (SELECT num3 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,4)
+					      UNION ALL
+					      (SELECT num4 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,4)
+					      UNION ALL
+					      (SELECT num5 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,4)
+					      UNION ALL
+					      (SELECT num6 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,4)	      
+					) a
+					GROUP BY num
+					) a
+				) a
+		) a
+	]]>
+	</select>
+	
+	<select id="lottoNumPrevWeek01" resultType="map">
+		SELECT num
+		FROM (
+		      (SELECT num1 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+		      UNION ALL 
+		      (SELECT num2 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+		      UNION ALL
+		      (SELECT num3 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+		      UNION ALL
+		      (SELECT num4 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+		      UNION ALL
+		      (SELECT num5 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+		      UNION ALL
+		      (SELECT num6 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+		) a
+		ORDER BY RAND()
+		LIMIT 1
+	</select>
+	
+	<select id="lottoNumPrevNextk01" resultType="map">
+		SELECT num
+		FROM (
+			SELECT num + 1 AS num
+			FROM (
+			      (SELECT num1 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			      UNION ALL 
+			      (SELECT num2 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			      UNION ALL
+			      (SELECT num3 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			      UNION ALL
+			      (SELECT num4 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			      UNION ALL
+			      (SELECT num5 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			      UNION ALL
+			      (SELECT num6 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			) a
+			UNION ALL
+			SELECT num - 1 AS num
+			FROM (
+			      (SELECT num1 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			      UNION ALL 
+			      (SELECT num2 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			      UNION ALL
+			      (SELECT num3 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			      UNION ALL
+			      (SELECT num4 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			      UNION ALL
+			      (SELECT num5 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			      UNION ALL
+			      (SELECT num6 AS num FROM lotto_main ORDER BY drawNo DESC LIMIT 0,1)
+			) a
+		) a
+		GROUP BY num
+		ORDER BY RAND()
+		LIMIT 1
+	</select>
+</mapper>
