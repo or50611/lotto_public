@@ -1,4 +1,5 @@
 안드로이드기반 로또 어플입니다. 실제 실용성보다는 개인공부용으로 작업한 프로젝트이며
 개발인원 2명으로 서버와 백엔드를 담당하였습니다
 api와 크롤링을 이용해 데이터를 수집하고 스케줄러를 통한 데이터 갱신을 통하여 최신화를 하고있습니다.
-현재는 aws에 jenkins와 docker를 이용하여 자동화배포시스템을 만들어 운영하기위한 작업을 하고있습니다.
+
+https://play.google.com/store/apps/details?id=com.webappmoney.lotto
